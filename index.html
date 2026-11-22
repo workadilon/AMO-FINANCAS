@@ -37,6 +37,13 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
     #supabase-login{max-width:510px;margin-top:18px}#supabase-login .field{margin-bottom:12px}#supabase-status{margin-top:12px}
+    /* Correção dos cartões de ajustes e controles PWA */
+    [hidden]{display:none!important}
+    #pwa-install-panel>p,#supabase-panel>p{min-height:0!important;margin-bottom:12px}
+    #pwa-install-panel .settings-actions{margin-top:12px}
+    #supabase-panel .settings-actions{margin-top:12px}
+    #supabase-panel .field{max-width:100%}
+    #supabase-panel,#pwa-install-panel{align-self:start}
   </style>
 </head>
 <body>
@@ -911,6 +918,48 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     const controls=[...form.elements,...actions.querySelectorAll('button')];
     let session=null;
     let busy=false;
+    const CONFIG_KEY='amo_financas_supabase_config_v1';
+    const SESSION_KEY='amo_financas_supabase_session_v1';
+    function saveConnection(){
+      try{
+        if(!session)return;
+        localStorage.setItem(CONFIG_KEY,JSON.stringify({url:session.url,key:session.key,email:session.email}));
+        localStorage.setItem(SESSION_KEY,JSON.stringify({token:session.token,refreshToken:session.refreshToken,expiresAt:session.expiresAt,userId:session.userId,email:session.email}));
+      }catch(e){status.textContent='Não foi possível persistir a conexão neste navegador.';console.warn(e)}
+    }
+    function clearConnection(){
+      try{localStorage.removeItem(SESSION_KEY)}catch(e){console.warn(e)}
+    }
+    function restoreConnection(){
+      try{
+        const config=JSON.parse(localStorage.getItem(CONFIG_KEY)||'null');
+        const auth=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
+        if(config){$('#supabase-url').value=config.url||'';$('#supabase-key').value=config.key||'';$('#supabase-email').value=config.email||'';}
+        if(config?.url&&config?.key&&auth?.refreshToken&&auth?.userId){
+          session={...config,...auth};
+          form.classList.add('hidden');actions.classList.remove('hidden');
+          status.textContent='Sessão anterior recuperada. Verificando autenticação…';
+          refreshSession().then(()=>{status.textContent='Conectado como '+session.email+'.';}).catch(()=>{
+            session=null;clearConnection();form.classList.remove('hidden');actions.classList.add('hidden');
+            status.textContent='Sessão expirada. Conecte-se novamente; os dados de configuração foram preservados.';
+          });
+        }
+      }catch(e){console.warn('Falha ao recuperar conexão:',e)}
+    }
+    async function refreshSession(){
+      if(!session?.refreshToken)throw new Error('Conecte-se novamente.');
+      const config={url:session.url,key:session.key};
+      const result=await request(config,'/auth/v1/token?grant_type=refresh_token','POST',{refresh_token:session.refreshToken});
+      if(!result?.access_token)throw new Error('Sessão expirada.');
+      session={...session,token:result.access_token,refreshToken:result.refresh_token||session.refreshToken,
+        expiresAt:Date.now()+((result.expires_in||3600)*1000),userId:result.user?.id||session.userId,
+        email:result.user?.email||session.email};
+      saveConnection();
+    }
+    async function ensureSession(){
+      if(!session)throw new Error('Conecte-se ao Supabase.');
+      if(!session.expiresAt||Date.now()>session.expiresAt-120000)await refreshSession();
+    }
 
     async function request(config,path,method='GET',body,returnRows=false) {
       const headers={apikey:config.key};
@@ -972,7 +1021,8 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
           email:$('#supabase-email').value.trim(),password
         });
         if(!result?.access_token||!result.user?.id)throw new Error('O Supabase não retornou uma sessão válida.');
-        session={...config,token:result.access_token,userId:result.user.id,email:result.user.email};
+        session={...config,token:result.access_token,refreshToken:result.refresh_token,expiresAt:Date.now()+((result.expires_in||3600)*1000),userId:result.user.id,email:result.user.email};
+        saveConnection();
         return 'Conectado como '+session.email+'.';
       });
     });
@@ -981,6 +1031,7 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     const ownRow=()=>table+'?user_id=eq.'+encodeURIComponent(session.userId);
 
     $('#supabase-push').addEventListener('click',()=>run(async()=>{
+      await ensureSession();
       const [remote]=await request(session,ownRow()+'&select=revision');
       const message=remote?'Substituir a cópia no Supabase pelos dados deste navegador?':'Enviar os dados deste navegador para o Supabase?';
       if(!confirm(message))return 'Envio cancelado.';
@@ -994,6 +1045,7 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     }));
 
     $('#supabase-pull').addEventListener('click',()=>run(async()=>{
+      await ensureSession();
       const [remote]=await request(session,ownRow()+'&select=payload');
       if(!remote)return 'Ainda não há uma cópia no Supabase para esta conta.';
       const data=normalizeBackup(remote.payload);
@@ -1011,10 +1063,11 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
 
     $('#supabase-disconnect').addEventListener('click',()=>run(async()=>{
       const previous=session;
-      session=null;
-      await request(previous,'/auth/v1/logout?scope=local','POST');
+      session=null;clearConnection();
+      try{await request(previous,'/auth/v1/logout?scope=local','POST')}catch(e){console.warn('Logout remoto indisponível:',e)}
       return 'Desconectado.';
     }));
+    restoreConnection();
   }
   function exportCsv() {
     const d=monthData(selectedMonth);
