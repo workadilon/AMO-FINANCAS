@@ -44,6 +44,25 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     #supabase-panel .settings-actions{margin-top:12px}
     #supabase-panel .field{max-width:100%}
     #supabase-panel,#pwa-install-panel{align-self:start}
+
+/* Ajustes: altura natural, alinhamento e responsividade corrigidos */
+#screen-settings .settings-grid{align-items:start;grid-auto-rows:max-content;gap:16px}
+#screen-settings .settings-grid>.settings-panel{height:auto;min-height:0;align-self:start}
+#screen-settings .settings-panel{height:auto;min-height:0;align-self:start}
+#screen-settings .settings-panel>p{min-height:0!important;height:auto!important;margin:0 0 16px;line-height:1.65}
+#screen-settings .settings-icon{margin-bottom:14px}
+#screen-settings .settings-actions{margin-top:14px}
+#screen-settings #pwa-install-panel{padding-top:22px;padding-bottom:22px}
+#screen-settings #pwa-install-panel>p{margin:0!important}
+#screen-settings #pwa-install-panel .settings-actions:empty{display:none}
+#screen-settings #supabase-panel #supabase-login{max-width:none;width:100%;margin-top:16px}
+#screen-settings #supabase-panel #supabase-login .field{width:100%;max-width:none}
+#screen-settings #supabase-panel #supabase-login .settings-actions{margin-top:6px}
+#screen-settings #supabase-panel #supabase-status:empty{display:none}
+@media(max-width:720px){#screen-settings .settings-grid{grid-template-columns:minmax(0,1fr)}#screen-settings .settings-panel{padding:20px}#screen-settings #pwa-install-panel{padding:20px}}
+
+/* Cofrinhos */
+.jars-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:20px}.jar-card{padding:23px}.jar-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.jar-title{font-weight:850;font-size:16px;overflow-wrap:anywhere}.jar-amount{font-size:26px;font-weight:850;margin:18px 0 5px}.jar-hint{color:#83949e;font-size:11px;line-height:1.6;margin-top:10px}.jar-progress{height:9px;border-radius:20px;background:#e9f0f3;overflow:hidden;margin-top:14px}.jar-progress>div{height:100%;background:#16ad8d;border-radius:20px}.jar-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:19px}.jar-actions .btn{height:38px;padding:0 12px}.jar-summary .surface{min-height:120px}.jar-empty{grid-column:1/-1}.privacy :is(#jars-total,#jars-free,.jar-amount){filter:blur(7px)}@media(max-width:720px){.jars-grid{grid-template-columns:1fr}.jar-summary{grid-template-columns:1fr 1fr}.jar-summary .surface:last-child{grid-column:1/-1}.jar-summary .surface{padding:17px;min-height:95px}.jar-summary .summary-number{font-size:21px}.bottom-link{min-width:0;font-size:8px}}
   </style>
 </head>
 <body>
@@ -90,6 +109,7 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
       <nav class="side-nav" aria-label="Seções">
         <button class="nav-link active" data-nav="overview"><svg class="ic"><use href="#i-grid"></use></svg> Visão geral</button>
         <button class="nav-link" data-nav="transactions"><svg class="ic"><use href="#i-receipt"></use></svg> Lançamentos</button>
+        <button class="nav-link" data-nav="cofrinhos">🏦 Cofrinhos</button>
         <button class="nav-link" data-nav="planning"><svg class="ic"><use href="#i-target"></use></svg> Planejamento</button>
         <button class="nav-link" data-nav="settings"><svg class="ic"><use href="#i-settings"></use></svg> Ajustes</button>
       </nav>
@@ -142,6 +162,15 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
           <div class="surface list-surface"><div class="surface-head list-header"><div><h2>Movimentações</h2><p id="list-subtitle">Lançamentos do mês</p></div><span class="total-count" id="transaction-count">0 itens</span></div><div id="full-list"></div></div>
         </section>
 
+
+<section class="screen hidden" id="screen-cofrinhos" data-screen="cofrinhos">
+  <div class="page-heading"><div><div class="eyebrow"><span class="eyebrow-dot"></span> RESERVAS FINANCEIRAS</div><h1>Meus <span>cofrinhos.</span></h1><p>Separe dinheiro para seus objetivos sem registrar uma nova despesa.</p></div><button type="button" class="btn btn-primary" id="new-jar">+ Novo cofrinho</button></div>
+  <div class="summary-grid jar-summary"><article class="surface"><div class="summary-title">Total reservado</div><div class="summary-number" id="jars-total">R$ 0,00</div></article><article class="surface"><div class="summary-title">Cofrinhos ativos</div><div class="summary-number" id="jars-count">0</div></article><article class="surface"><div class="summary-title">Saldo livre estimado</div><div class="summary-number" id="jars-free">R$ 0,00</div><p class="jar-hint">Saldo acumulado até o mês selecionado, menos reservas.</p></article></div>
+  <div id="jars-list" class="jars-grid"></div>
+  <p class="jar-hint">Reservar ou retirar dinheiro é uma transferência interna: não altera entradas ou despesas. O saldo livre é uma estimativa baseada nos lançamentos cadastrados.</p>
+</section>
+<div id="jar-modal" class="modal-backdrop hidden"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="jar-modal-title"><div class="modal-header"><h2 id="jar-modal-title">Novo cofrinho</h2><button type="button" class="icon-btn close-modal" id="jar-close" aria-label="Fechar">✕</button></div><form id="jar-form"><input id="jar-id" type="hidden"><label class="field-label" for="jar-name">Nome do cofrinho</label><input class="field" id="jar-name" required maxlength="60" placeholder="Ex.: Reserva de emergência"><label class="field-label" for="jar-goal">Meta (R$) — opcional</label><input class="field" id="jar-goal" inputmode="decimal" placeholder="Ex.: 5.000,00"><button class="btn btn-primary" type="submit">Salvar cofrinho</button></form></div></div>
+<div id="jar-move-modal" class="modal-backdrop hidden"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="jar-move-title"><div class="modal-header"><h2 id="jar-move-title">Reservar valor</h2><button type="button" class="icon-btn close-modal" id="jar-move-close" aria-label="Fechar">✕</button></div><form id="jar-move-form"><label class="field-label" for="jar-move-amount">Valor (R$)</label><input class="field" id="jar-move-amount" required inputmode="decimal" placeholder="0,00"><button type="submit" class="btn btn-primary">Confirmar</button></form></div></div>
         <section class="screen hidden" id="screen-planning" data-screen="planning">
           <div class="page-heading"><div><div class="eyebrow"><span class="eyebrow-dot"></span> PLANEJE MELHOR</div><h1>Metas e <span>limites.</span></h1><p>Defina seus objetivos para o mês selecionado.</p></div></div>
           <div class="planning-grid">
@@ -207,7 +236,7 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     </div>
   </div>
 
-  <nav class="bottom-nav" aria-label="Navegação do aplicativo"><button class="bottom-link active" data-nav="overview"><svg class="ic"><use href="#i-grid"></use></svg><span>Início</span></button><button class="bottom-link" data-nav="transactions"><svg class="ic"><use href="#i-receipt"></use></svg><span>Lançamentos</span></button><button class="bottom-link" data-nav="planning"><svg class="ic"><use href="#i-target"></use></svg><span>Metas</span></button><button class="bottom-link" data-nav="settings"><svg class="ic"><use href="#i-settings"></use></svg><span>Ajustes</span></button></nav>
+  <nav class="bottom-nav" aria-label="Navegação do aplicativo"><button class="bottom-link active" data-nav="overview"><svg class="ic"><use href="#i-grid"></use></svg><span>Início</span></button><button class="bottom-link" data-nav="transactions"><svg class="ic"><use href="#i-receipt"></use></svg><span>Lançamentos</span></button><button class="bottom-link" data-nav="cofrinhos"><span style="font-size:20px">🏦</span><span>Cofrinhos</span></button><button class="bottom-link" data-nav="planning"><svg class="ic"><use href="#i-target"></use></svg><span>Metas</span></button><button class="bottom-link" data-nav="settings"><svg class="ic"><use href="#i-settings"></use></svg><span>Ajustes</span></button></nav>
   <button id="mobile-fab" class="mobile-fab" aria-label="Adicionar lançamento" title="Adicionar lançamento"><svg class="ic"><use href="#i-plus"></use></svg></button>
 
   <div id="modal-backdrop" class="modal-backdrop hidden"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><div class="eyebrow">MOVIMENTAÇÃO</div><h2 id="modal-title">Novo lançamento</h2></div><button type="button" id="close-modal" class="icon-btn close-modal" aria-label="Fechar"><svg class="ic"><use href="#i-x"></use></svg></button></div>
@@ -263,7 +292,7 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     return parts[0]||'';
   }
   const defaultSettings = () => ({name:'',hideValues:false,backupReminder:true,lastBackup:null});
-  const empty = () => ({version:2,transactions:[],plans:{},categories:cloneCats(),settings:defaultSettings()});
+  const empty = () => ({version:2,transactions:[],plans:{},categories:cloneCats(),settings:defaultSettings(),cofrinhos:[]});
   let state = loadState();
   let selectedMonth = localDate().slice(0,7);
   let activeView = 'overview';
@@ -387,7 +416,14 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
       }
       plans[month]={expenseLimit:plan.expenseLimit??null,savingsGoal:plan.savingsGoal??null};
     }
-    return {version:2,transactions:tx,plans,categories:cats,settings:normalizeSettings(raw.settings)};
+    const jars=Array.isArray(raw.cofrinhos)?raw.cofrinhos:[];
+    if(jars.length>500)throw new Error('Quantidade de cofrinhos inválida.');
+    const cleanJars=jars.map(j=>{
+      if(!j||typeof j.id!=='string'||typeof j.name!=='string'||!j.name.trim()||j.name.length>60||!Number.isSafeInteger(j.cents)||j.cents<0||j.cents>1e14||!Number.isSafeInteger(j.goalCents)||j.goalCents<0||j.goalCents>1e14)throw new Error('Cofrinho inválido no backup.');
+      return {id:j.id,name:j.name.trim(),cents:j.cents,goalCents:j.goalCents};
+    });
+    if(new Set(cleanJars.map(j=>j.id)).size!==cleanJars.length)throw new Error('Cofrinhos duplicados.');
+    return {version:3,transactions:tx,plans,categories:cats,settings:normalizeSettings(raw.settings),cofrinhos:cleanJars};
   }
   function loadState() {
     try {
@@ -446,7 +482,7 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     selectedMonth=next;render();
   }
   function switchView(view) {
-    if (!['overview','transactions','planning','settings'].includes(view)) return;
+    if (!['overview','transactions','planning','settings','cofrinhos'].includes(view)) return;
     activeView=view;
     $$('[data-screen]').forEach(el=>el.classList.toggle('hidden',el.dataset.screen!==view));
     $$('[data-nav]').forEach(el=>{el.classList.toggle('active',el.dataset.nav===view);if(el.dataset.nav===view)el.setAttribute('aria-current','page');else el.removeAttribute('aria-current')});
@@ -464,6 +500,7 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     renderPlan(data);
     renderCategoryLimits(data);
     renderSettings();
+    renderJars();
   }
   function renderOverview(d) {
     $('#balance-value').textContent=formatMoney(d.balance);
@@ -904,10 +941,10 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
   }
   function clearData() {
     if(!state.transactions.length&&!Object.keys(state.plans).length){notify('Não há dados para excluir.');return}
-    if(!confirm('ATENÇÃO: todos os lançamentos e planejamentos serão apagados deste navegador (suas categorias e preferências serão mantidas). Essa ação não pode ser desfeita. Você já fez o backup?'))return;
+    if(!confirm('ATENÇÃO: todos os lançamentos e planejamentos serão apagados (cofrinhos serão preservados) deste navegador (suas categorias e preferências serão mantidas). Essa ação não pode ser desfeita. Você já fez o backup?'))return;
     const typed=prompt('Para confirmar a exclusão definitiva, digite APAGAR:');
     if(typed!=='APAGAR'){notify('Exclusão cancelada.');return}
-    const before=state;state={...empty(),categories:before.categories,settings:before.settings};
+    const before=state;state={...empty(),categories:before.categories,settings:before.settings,cofrinhos:before.cofrinhos};
     if(!persist()){state=before;return;}
     render();notify('Todos os dados foram removidos deste navegador.');
   }
@@ -1129,6 +1166,79 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     $('#color-grid').addEventListener('click',e=>{const b=e.target.closest('[data-color]');if(!b)return;catPick.color=b.dataset.color;renderPickers()});
     $('#cat-emoji').addEventListener('input',e=>{const em=cleanEmoji(e.target.value);if(em){catPick.emoji=em;renderPickers()}});
   }
+
+  // Cofrinhos: centavos inteiros evitam erros de arredondamento.
+  let jarMoveId=null,jarMoveKind='add';
+  const jarMoney=c=>formatMoney(c/100);
+  function jarAvailable(){
+    const first=[...state.transactions.map(t=>t.date.slice(0,7)),selectedMonth].sort()[0];
+    let balance=0, month=first;
+    for(let i=0;i<600 && month<=selectedMonth;i++,month=addMonths(month,1))balance+=monthData(month).balance;
+    return balance-(state.cofrinhos||[]).reduce((sum,j)=>sum+j.cents/100,0);
+  }
+  function renderJars(){
+    const jars=state.cofrinhos||[];
+    $('#jars-total').textContent=jarMoney(jars.reduce((s,j)=>s+j.cents,0));
+    $('#jars-count').textContent=String(jars.length);
+    $('#jars-free').textContent=formatMoney(jarAvailable());
+    $('#jars-list').innerHTML=jars.length?jars.map(j=>`<article class="surface jar-card"><div class="jar-top"><span class="jar-title">🏦 ${escapeHtml(j.name)}</span><button class="mini-action" data-jar-action="edit" data-jar-id="${escapeHtml(j.id)}" title="Editar cofrinho" aria-label="Editar cofrinho">${icon('edit')}</button></div><div class="jar-amount">${jarMoney(j.cents)}</div><div class="jar-hint">${j.goalCents?'Meta: '+jarMoney(j.goalCents)+' · '+Math.min(100,Math.round(j.cents/j.goalCents*100))+'%':'Sem meta definida'}</div><div class="jar-progress"><div style="width:${j.goalCents?Math.min(100,j.cents/j.goalCents*100):0}%"></div></div><div class="jar-actions"><button class="btn btn-primary" data-jar-action="add" data-jar-id="${escapeHtml(j.id)}">+ Reservar</button><button class="btn btn-outline" data-jar-action="withdraw" data-jar-id="${escapeHtml(j.id)}">Retirar</button><button class="btn btn-danger" data-jar-action="delete" data-jar-id="${escapeHtml(j.id)}">Excluir</button></div></article>`).join(''):'<div class="surface jar-empty empty-state"><h3>Você ainda não criou cofrinhos</h3><p>Crie um para separar dinheiro e acompanhar suas metas.</p></div>';
+  }
+  function jarOpen(id=''){
+    const j=(state.cofrinhos||[]).find(x=>x.id===id);
+    $('#jar-id').value=j?.id||'';$('#jar-name').value=j?.name||'';$('#jar-goal').value=j?.goalCents?String(j.goalCents/100).replace('.',','):'';
+    $('#jar-modal-title').textContent=j?'Editar cofrinho':'Novo cofrinho';$('#jar-modal').classList.remove('hidden');
+  }
+  function jarCents(text,optional=false){
+    if(optional&&!String(text).trim())return 0;
+    const n=parseNumber(text);
+    if(!Number.isFinite(n)||n<0||n>1e12)throw new Error('Informe um valor válido.');
+    return Math.round(n*100);
+  }
+  function jarSaveChange(fn){
+    const before=JSON.stringify(state.cofrinhos);
+    fn();
+    if(!persist()){state.cofrinhos=JSON.parse(before);return false;}
+    render();return true;
+  }
+  function bindJars(){
+    $('#new-jar').addEventListener('click',()=>jarOpen());
+    $('#jar-close').addEventListener('click',()=>$('#jar-modal').classList.add('hidden'));
+    $('#jar-move-close').addEventListener('click',()=>$('#jar-move-modal').classList.add('hidden'));
+    for(const id of ['jar-modal','jar-move-modal'])$('#'+id).addEventListener('click',e=>{if(e.target.id===id)e.target.classList.add('hidden')});
+    $('#jar-form').addEventListener('submit',e=>{
+      e.preventDefault();
+      try{
+        const name=$('#jar-name').value.trim(),goalCents=jarCents($('#jar-goal').value,true),id=$('#jar-id').value;
+        if(!name)throw new Error('Informe o nome do cofrinho.');
+        if(jarSaveChange(()=>{const j=state.cofrinhos.find(x=>x.id===id);if(j){j.name=name;j.goalCents=goalCents}else state.cofrinhos.push({id:generateId(),name,cents:0,goalCents})})){ $('#jar-modal').classList.add('hidden');notify('Cofrinho salvo.');}
+      }catch(err){notify(err.message,true)}
+    });
+    $('#jars-list').addEventListener('click',e=>{
+      const btn=e.target.closest('[data-jar-action]');if(!btn)return;
+      const j=state.cofrinhos.find(x=>x.id===btn.dataset.jarId);if(!j)return;
+      const action=btn.dataset.jarAction;
+      if(action==='edit'){jarOpen(j.id);return}
+      if(action==='delete'){
+        if(j.cents>0){notify('Retire todo o valor reservado antes de excluir.',true);return}
+        if(confirm('Excluir o cofrinho '+j.name+'?'))jarSaveChange(()=>state.cofrinhos=state.cofrinhos.filter(x=>x.id!==j.id));return;
+      }
+      jarMoveId=j.id;jarMoveKind=action;
+      $('#jar-move-title').textContent=action==='add'?'Reservar em '+j.name:'Retirar de '+j.name;
+      $('#jar-move-amount').value='';$('#jar-move-modal').classList.remove('hidden');
+    });
+    $('#jar-move-form').addEventListener('submit',e=>{
+      e.preventDefault();
+      try{
+        const cents=jarCents($('#jar-move-amount').value);
+        if(cents<=0)throw new Error('Informe um valor maior que zero.');
+        const j=state.cofrinhos.find(x=>x.id===jarMoveId);if(!j)throw new Error('Cofrinho não encontrado.');
+        if(jarMoveKind==='withdraw'&&cents>j.cents)throw new Error('Valor maior que o saldo reservado.');
+        if(jarMoveKind==='add'&&cents/100>jarAvailable()+0.005)throw new Error('Saldo livre insuficiente. Confira seus lançamentos.');
+        if(jarSaveChange(()=>j.cents+=jarMoveKind==='add'?cents:-cents)){$('#jar-move-modal').classList.add('hidden');notify('Reserva atualizada.');}
+      }catch(err){notify(err.message,true)}
+    });
+  }
+
   function bindEvents() {
     $('#month-prev').addEventListener('click',()=>updateMonth(-1));
     $('#month-next').addEventListener('click',()=>updateMonth(1));
@@ -1181,6 +1291,7 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     $('#clear-data').addEventListener('click',clearData);
   }
   bindEvents();
+  bindJars();
   bindExtraEvents();
   bindSupabaseSync();
   render();
