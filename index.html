@@ -63,6 +63,16 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
 
 /* Cofrinhos */
 .jars-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:20px}.jar-card{padding:23px}.jar-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.jar-title{font-weight:850;font-size:16px;overflow-wrap:anywhere}.jar-amount{font-size:26px;font-weight:850;margin:18px 0 5px}.jar-hint{color:#83949e;font-size:11px;line-height:1.6;margin-top:10px}.jar-progress{height:9px;border-radius:20px;background:#e9f0f3;overflow:hidden;margin-top:14px}.jar-progress>div{height:100%;background:#16ad8d;border-radius:20px}.jar-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:19px}.jar-actions .btn{height:38px;padding:0 12px}.jar-summary .surface{min-height:120px}.jar-empty{grid-column:1/-1}.privacy :is(#jars-total,#jars-free,.jar-amount){filter:blur(7px)}@media(max-width:720px){.jars-grid{grid-template-columns:1fr}.jar-summary{grid-template-columns:1fr 1fr}.jar-summary .surface:last-child{grid-column:1/-1}.jar-summary .surface{padding:17px;min-height:95px}.jar-summary .summary-number{font-size:21px}.bottom-link{min-width:0;font-size:8px}}
+
+/* Visão geral: saldo acumulado e atalhos de sincronização. */
+.overview-sync{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:17px}
+.overview-sync-info{min-width:0;flex:1 1 180px}.overview-sync-info strong{display:block;font-size:12px;color:var(--ink)}
+.overview-sync-status{display:block;color:#728692;font-size:11px;line-height:1.5;overflow-wrap:anywhere;margin-top:4px}
+.overview-sync-actions{display:flex;gap:8px;flex:0 0 auto}.overview-sync-actions .btn{height:44px;padding:0 14px}.sync-arrow{font-size:23px;line-height:1;font-weight:750}.overview-sync-actions .btn:disabled{opacity:.55;cursor:wait;transform:none}
+.total-balance-card{background:linear-gradient(120deg,#087b69,#12634f);color:white;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:22px;align-items:center;padding:23px 26px;margin-bottom:17px;border-radius:var(--radius);box-shadow:var(--shadow)}
+.total-balance-card .balance-head{color:#dcf5ed;flex-wrap:wrap}.total-balance-card .balance-amount{margin-top:12px}.total-balance-note{font-size:11px;line-height:1.5;color:#d1eee4;margin:8px 0 0}
+.total-breakdown{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.total-breakdown-item{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);padding:14px;border-radius:12px;min-width:0}.total-breakdown-item .summary-title{color:#d1eee4}.total-breakdown-item .summary-number{color:white;font-size:clamp(17px,2vw,24px);letter-spacing:-.5px}
+@media(max-width:720px){.overview-sync{margin-bottom:12px;gap:8px}.overview-sync-actions{width:100%}.overview-sync-actions .btn{flex:1;padding:0 10px}.total-balance-card{grid-template-columns:1fr;padding:20px;gap:16px;margin-bottom:12px}.total-balance-card .balance-amount{font-size:32px}.total-breakdown-item{padding:12px}.total-breakdown-item .summary-number{font-size:18px}}
   </style>
 </head>
 <body>
@@ -140,6 +150,23 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
             <div><div class="eyebrow"><span class="eyebrow-dot"></span> <span id="greeting-text">PAINEL FINANCEIRO</span></div><h1>Seu dinheiro, <span>com clareza.</span></h1><p>Um resumo de tudo que entra, sai e fica para você.</p></div>
             <button class="btn btn-outline overview-add" data-add="expense"><svg class="ic"><use href="#i-plus"></use></svg> Adicionar despesa</button>
           </div>
+          <div class="overview-sync" aria-label="Sincronização com Supabase">
+            <div class="overview-sync-info"><strong>Sincronização na nuvem</strong><span id="home-sync-status" class="overview-sync-status" role="status" aria-live="polite">Conecte-se nos Ajustes.</span></div>
+            <div class="overview-sync-actions">
+              <button id="home-sync-push" type="button" class="btn btn-primary" title="Enviar ao Supabase" aria-label="Enviar ao Supabase"><span class="sync-arrow" aria-hidden="true">↑</span> Enviar</button>
+              <button id="home-sync-pull" type="button" class="btn btn-outline" title="Restaurar do Supabase" aria-label="Restaurar do Supabase"><span class="sync-arrow" aria-hidden="true">↓</span> Restaurar</button>
+            </div>
+          </div>
+          <article class="total-balance-card" aria-labelledby="total-balance-title">
+            <div><div class="balance-head"><span class="balance-symbol"><svg class="ic"><use href="#i-wallet"></use></svg></span><span id="total-balance-title">Saldo total acumulado</span><span class="balance-chip">Todos os meses</span></div>
+              <div id="total-balance-value" class="balance-amount">R$ 0,00</div>
+              <p class="total-balance-note" id="total-balance-period">Inclui os valores guardados em cofrinhos.</p>
+            </div>
+            <div class="total-breakdown">
+              <div class="total-breakdown-item"><div class="summary-title">Saldo livre</div><div class="summary-number" id="total-free-value">R$ 0,00</div></div>
+              <div class="total-breakdown-item"><div class="summary-title">Guardado em cofrinhos</div><div class="summary-number" id="total-jars-value">R$ 0,00</div></div>
+            </div>
+          </article>
           <div class="summary-grid">
             <article class="balance-card">
               <div class="balance-head"><span class="balance-symbol"><svg class="ic"><use href="#i-wallet"></use></svg></span><span>Saldo disponível</span><span class="balance-chip" id="balance-chip">Neste mês</span></div>
@@ -476,6 +503,35 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     const expenses=rows.filter(t=>t.kind==='expense').reduce((sum,t)=>sum+t.calculated,0);
     return {month,rows,income,salary,expenses,balance:income-expenses,incomeCount:incomes.length,expenseCount:rows.filter(t=>t.kind==='expense').length};
   }
+  // Agrega por mês sem repetir o cálculo ou a ordenação de cada lançamento.
+  // A recorrência vai até o mês atual ou o último mês com lançamento, o que for posterior.
+  function totalBalanceData() {
+    const current=localDate().slice(0,7);
+    let first=current,last=current;
+    const groups=new Map();
+    const blank=()=>({income:0,salary:0,fixed:0,incomePercent:0,salaryPercent:0});
+    for(const t of state.transactions){
+      const month=t.date.slice(0,7);
+      if(month<first)first=month;
+      if(month>last)last=month;
+      if(!groups.has(month))groups.set(month,{regular:blank(),recurring:blank()});
+      const b=groups.get(month)[t.recurring?'recurring':'regular'];
+      if(t.kind==='income'){b.income+=t.value;if(t.category==='Salário')b.salary+=t.value;}
+      else if(t.amountType==='percent')b[t.percentBase==='salary'?'salaryPercent':'incomePercent']+=t.value/100;
+      else b.fixed+=t.value;
+    }
+    const recurring=blank();
+    let total=0;
+    for(let month=first;;month=addMonths(month,1)){
+      const group=groups.get(month), one=group?.regular||blank();
+      if(group)for(const key of Object.keys(recurring))recurring[key]+=group.recurring[key];
+      const income=recurring.income+one.income,salary=recurring.salary+one.salary;
+      total+=income-recurring.fixed-one.fixed-income*(recurring.incomePercent+one.incomePercent)-salary*(recurring.salaryPercent+one.salaryPercent);
+      if(month===last)break;
+    }
+    const reserved=(state.cofrinhos||[]).reduce((sum,j)=>sum+j.cents/100,0);
+    return {total,reserved,free:total-reserved,first,last};
+  }
   function effectivePlan() {return state.plans[selectedMonth]||{expenseLimit:null,savingsGoal:null}}
   function updateMonth(amount) {
     const next=addMonths(selectedMonth,amount);
@@ -504,6 +560,11 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     renderJars();
   }
   function renderOverview(d) {
+    const accumulated=totalBalanceData();
+    for(const [id,value] of [['total-balance-value',accumulated.total],['total-free-value',accumulated.free],['total-jars-value',accumulated.reserved]]){
+      const element=$('#'+id);element.textContent=formatMoney(value);element.style.color=value<-.005?'#ffd1c7':'';
+    }
+    $('#total-balance-period').textContent=`${monthLabel(accumulated.first)} até ${monthLabel(accumulated.last)} · Inclui as reservas`;
     $('#balance-value').textContent=formatMoney(d.balance);
     $('#balance-value').style.color=d.balance<0?'#ffc3b7':'';
     $('#income-value').textContent=formatMoney(d.income);
@@ -953,7 +1014,11 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     const form=$('#supabase-login');
     const actions=$('#supabase-actions');
     const status=$('#supabase-status');
-    const controls=[...form.elements,...actions.querySelectorAll('button')];
+    const homeStatus=$('#home-sync-status');
+    const homePush=$('#home-sync-push'),homePull=$('#home-sync-pull');
+    const controls=[...form.elements,...actions.querySelectorAll('button'),homePush,homePull];
+    function setStatus(message){status.textContent=message;homeStatus.textContent=message;}
+    setStatus('Conecte-se ao Supabase nos Ajustes.');
     let session=null;
     let busy=false;
     const CONFIG_KEY='amo_financas_supabase_config_v1';
@@ -963,7 +1028,7 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
         if(!session)return;
         localStorage.setItem(CONFIG_KEY,JSON.stringify({url:session.url,key:session.key,email:session.email}));
         localStorage.setItem(SESSION_KEY,JSON.stringify({token:session.token,refreshToken:session.refreshToken,expiresAt:session.expiresAt,userId:session.userId,email:session.email}));
-      }catch(e){status.textContent='Não foi possível persistir a conexão neste navegador.';console.warn(e)}
+      }catch(e){notify('Não foi possível persistir a conexão neste navegador.',true);console.warn(e)}
     }
     function clearConnection(){
       try{localStorage.removeItem(SESSION_KEY)}catch(e){console.warn(e)}
@@ -976,11 +1041,8 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
         if(config?.url&&config?.key&&auth?.refreshToken&&auth?.userId){
           session={...config,...auth};
           form.classList.add('hidden');actions.classList.remove('hidden');
-          status.textContent='Sessão anterior recuperada. Verificando autenticação…';
-          refreshSession().then(()=>{status.textContent='Conectado como '+session.email+'.';}).catch(()=>{
-            session=null;clearConnection();form.classList.remove('hidden');actions.classList.add('hidden');
-            status.textContent='Sessão expirada. Conecte-se novamente; os dados de configuração foram preservados.';
-          });
+          // Renove a sessão sob demanda, sem apagar a conexão ao iniciar offline.
+          setStatus('Sessão recuperada. Pronto para enviar ou restaurar.');
         }
       }catch(e){console.warn('Falha ao recuperar conexão:',e)}
     }
@@ -1015,8 +1077,13 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
       }
       if(!response.ok) {
         const details=await response.json().catch(()=>null);
-        if(path.startsWith('/auth/v1/token'))throw new Error('Falha ao conectar. Confira a chave, o e-mail e a senha da conta no Supabase.');
-        if(response.status===401){session=null;throw new Error('Sessão expirada. Conecte-se novamente.')}
+        if(path.startsWith('/auth/v1/token')){
+          if(path.includes('grant_type=refresh_token')&&[400,401,403].includes(response.status)){
+            session=null;clearConnection();throw new Error('Sessão expirada. Conecte-se novamente nos Ajustes.');
+          }
+          throw new Error('Falha ao conectar. Confira a chave, o e-mail e a senha da conta no Supabase.');
+        }
+        if(response.status===401){session=null;clearConnection();throw new Error('Sessão expirada. Conecte-se novamente.')}
         if(response.status===404||response.status===403||details?.code==='42501')throw new Error('Verifique se o script supabase_sync.sql foi aplicado e se a Data API está ativa.');
         if(response.status===409)throw new Error('A cópia na nuvem mudou em outro dispositivo. Consulte a versão atual antes de tentar novamente.');
         throw new Error('O Supabase devolveu um erro ('+response.status+'). Tente novamente.');
@@ -1028,11 +1095,11 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
       if(busy)return;
       busy=true;
       controls.forEach(control=>{control.disabled=true});
-      status.textContent='Aguarde…';
+      setStatus('Sincronizando…');
       try {
-        status.textContent=await operation();
+        setStatus(await operation());
       } catch(error) {
-        status.textContent=error.message;
+        setStatus(error.message);
         notify(error.message,true);
       } finally {
         busy=false;
@@ -1068,7 +1135,7 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
     const table='/rest/v1/amo_financas_sync';
     const ownRow=()=>table+'?user_id=eq.'+encodeURIComponent(session.userId);
 
-    $('#supabase-push').addEventListener('click',()=>run(async()=>{
+    const push=()=>run(async()=>{
       await ensureSession();
       const [remote]=await request(session,ownRow()+'&select=revision');
       const message=remote?'Substituir a cópia no Supabase pelos dados deste navegador?':'Enviar os dados deste navegador para o Supabase?';
@@ -1080,14 +1147,14 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
       if(rows?.length!==1)throw new Error('A cópia na nuvem mudou em outro dispositivo. Consulte a versão atual antes de tentar novamente.');
       notify('Cópia enviada ao Supabase.');
       return 'Último envio: '+new Date().toLocaleString('pt-BR');
-    }));
+    });
 
-    $('#supabase-pull').addEventListener('click',()=>run(async()=>{
+    const pull=()=>run(async()=>{
       await ensureSession();
       const [remote]=await request(session,ownRow()+'&select=payload');
       if(!remote)return 'Ainda não há uma cópia no Supabase para esta conta.';
       const data=normalizeBackup(remote.payload);
-      if(!confirm('Restaurar '+data.transactions.length+' lançamentos do Supabase e substituir todos os dados deste navegador?'))return 'Restauração cancelada.';
+      if(!confirm('Restaurar '+data.transactions.length+' lançamentos e '+data.cofrinhos.length+' cofrinhos do Supabase? Todos os dados financeiros locais serão substituídos pela cópia da nuvem.'))return 'Restauração cancelada.';
       const before=state;
       state=data;
       if(!persist()){
@@ -1097,7 +1164,16 @@ body.privacy :is(.balance-amount,.summary-number,.transaction-amount,.transactio
       render();
       notify('Cópia restaurada do Supabase.');
       return 'Última restauração: '+new Date().toLocaleString('pt-BR');
-    }));
+    });
+    $('#supabase-push').addEventListener('click',push);
+    $('#supabase-pull').addEventListener('click',pull);
+    function homeAction(operation){
+      if(busy)return;
+      if(!session){switchView('settings');$('#supabase-url').focus();notify('Conecte-se ao Supabase para sincronizar.');return;}
+      operation();
+    }
+    homePush.addEventListener('click',()=>homeAction(push));
+    homePull.addEventListener('click',()=>homeAction(pull));
 
     $('#supabase-disconnect').addEventListener('click',()=>run(async()=>{
       const previous=session;
